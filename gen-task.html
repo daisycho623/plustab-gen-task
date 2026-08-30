@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>플러스탭 작업 지시서 생성기</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f4f5f7;
+        color: #181a1b;
+        min-height: 100vh;
+      }
+
+      header {
+        background: #ff2e98;
+        color: #fff;
+        padding: 24px 32px;
+      }
+      header h1 {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      header p {
+        font-size: 13px;
+        opacity: 0.85;
+        margin-top: 4px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 32px auto;
+        padding: 0 20px 80px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 28px 28px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+
+      .card-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #ff2e98;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 18px;
+      }
+
+      .section-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        background: #ff2e98;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 8px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #66707a;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="url"],
+      textarea {
+        width: 100%;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 14px;
+        color: #181a1b;
+        outline: none;
+        transition: border-color 0.15s;
+        font-family: inherit;
+        background: #fafbfc;
+      }
+      input:focus,
+      textarea:focus {
+        border-color: #ff2e98;
+        background: #fff;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        opacity: 0.5;
+        color: #999;
+      }
+
+      .field {
+        margin-bottom: 18px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: #99a0aa;
+        margin-top: 5px;
+      }
+
+      /* 템플릿 */
+      .tpl-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .tpl-card {
+        border: 2px solid #e2e4e8;
+        border-radius: 12px;
+        padding: 14px 12px;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        user-select: none;
+      }
+      .tpl-card input[type="radio"] {
+        display: none;
+      }
+      .tpl-card.selected {
+        border-color: #ff2e98;
+        background: #fff0f8;
+      }
+      .tpl-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        background: #e2e4e8;
+        border-radius: 6px;
+        padding: 2px 8px;
+        margin-bottom: 8px;
+        color: #66707a;
+      }
+      .tpl-card.selected .tpl-badge {
+        background: #ff2e98;
+        color: #fff;
+      }
+      .tpl-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #181a1b;
+      }
+      .tpl-desc {
+        font-size: 11px;
+        color: #99a0aa;
+        margin-top: 3px;
+      }
+
+      /* 이미지 기본 URL */
+      .base-url-row {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fafbfc;
+      }
+      .base-url-prefix {
+        background: #f0f1f3;
+        padding: 11px 12px;
+        font-size: 12px;
+        color: #66707a;
+        white-space: nowrap;
+        border-right: 1.5px solid #e2e4e8;
+        flex-shrink: 0;
+      }
+      .base-url-input {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        padding: 11px 12px !important;
+        font-family: monospace !important;
+        font-size: 13px !important;
+      }
+
+      /* 모듈 팔레트 */
+      .module-palette {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .module-chip {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+        user-select: none;
+      }
+      .module-chip input[type="checkbox"] {
+        display: none;
+      }
+      .module-chip.selected {
+        border-color: #ff2e98;
+        background: #fff0f8;
+      }
+      .module-chip-id {
+        font-size: 11px;
+        font-weight: 700;
+        background: #e2e4e8;
+        color: #66707a;
+        border-radius: 6px;
+        padding: 1px 7px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .module-chip.selected .module-chip-id {
+        background: #ff2e98;
+        color: #fff;
+      }
+      .module-chip-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #181a1b;
+        line-height: 1.4;
+      }
+      .module-chip-desc {
+        font-size: 11px;
+        color: #99a0aa;
+        margin-top: 2px;
+      }
+
+      /* 신규 모듈 */
+      .new-module-box {
+        border: 1.5px dashed #c0c4cc;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-top: 12px;
+        display: none;
+      }
+      .new-module-box.visible {
+        display: block;
+      }
+      .new-module-fields {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .new-module-fields input {
+        flex: 1;
+        min-width: 140px;
+      }
+
+      /* 섹션 구성 */
+      .section-builder {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .section-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fafbfc;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 10px;
+        padding: 8px 10px;
+      }
+      .section-row-num {
+        font-size: 11px;
+        font-weight: 700;
+        color: #99a0aa;
+        width: 18px;
+        flex-shrink: 0;
+        text-align: center;
+      }
+      .section-row-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        flex: 1;
+      }
+      .section-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #ff2e98;
+        color: #fff;
+        border-radius: 6px;
+        padding: 3px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: default;
+      }
+      .section-tag button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        line-height: 1;
+        padding: 0;
+        margin: 0;
+      }
+      .section-tag button:hover {
+        color: #fff;
+      }
+      .section-add-btn {
+        background: none;
+        border: 1.5px dashed #c0c4cc;
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 12px;
+        color: #99a0aa;
+        cursor: pointer;
+      }
+      .section-add-btn:hover {
+        border-color: #ff2e98;
+        color: #ff2e98;
+      }
+      .btn-del-section {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: 1.5px solid #e2e4e8;
+        background: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #99a0aa;
+      }
+      .btn-del-section:hover {
+        background: #fff0f0;
+        border-color: #ffb3b3;
+        color: #e00;
+      }
+      .section-drag-handle,
+      .img-drag-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 36px;
+        flex-shrink: 0;
+        border: 0;
+        background: transparent;
+        color: #99a0aa;
+        font-size: 18px;
+        line-height: 1;
+        cursor: grab;
+        user-select: none;
+      }
+      .section-drag-handle:active,
+      .img-drag-handle:active {
+        cursor: grabbing;
+      }
+      .section-row.is-dragging {
+        opacity: 0.45;
+      }
+      .section-row.is-drag-over {
+        border-color: #ff2e98;
+        background: #fff7fb;
+      }
+
+      .btn-add {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding: 10px 14px;
+        border: 1.5px dashed #c0c4cc;
+        border-radius: 10px;
+        background: none;
+        cursor: pointer;
+        font-size: 13px;
+        color: #66707a;
+        width: 100%;
+        transition: border-color 0.15s, color 0.15s;
+      }
+      .btn-add:hover {
+        border-color: #ff2e98;
+        color: #ff2e98;
+      }
+
+      /* 이미지 URL */
+      .img-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        border-radius: 10px;
+        transition: background-color 0.15s, opacity 0.15s;
+      }
+      .img-row.is-dragging {
+        opacity: 0.45;
+      }
+      .img-row.is-drag-over {
+        background: #fff7fb;
+        outline: 1.5px solid #ff2e98;
+        outline-offset: 3px;
+      }
+      .img-label {
+        font-size: 12px;
+        color: #99a0aa;
+        width: 52px;
+        flex-shrink: 0;
+        text-align: right;
+      }
+      .img-path-row {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex: 1;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fafbfc;
+      }
+      .img-path-prefix {
+        background: #f0f1f3;
+        padding: 9px 10px;
+        font-size: 11px;
+        color: #66707a;
+        white-space: nowrap;
+        border-right: 1.5px solid #e2e4e8;
+        flex-shrink: 0;
+        line-height: 1.4;
+      }
+      .img-path-input {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        padding: 9px 10px !important;
+        font-family: monospace !important;
+        font-size: 13px !important;
+        flex: 1;
+      }
+      .btn-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1.5px solid #e2e4e8;
+        background: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .btn-icon:hover {
+        background: #f4f5f7;
+      }
+      .btn-icon.danger:hover {
+        background: #fff0f0;
+        border-color: #ffb3b3;
+      }
+
+      /* 생성 버튼 */
+      .btn-generate {
+        width: 100%;
+        padding: 16px;
+        background: #ff2e98;
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+        margin-top: 8px;
+      }
+      .btn-generate:hover {
+        background: #e0007e;
+      }
+
+      /* 결과 */
+      #result-section {
+        display: none;
+      }
+      .result-box {
+        background: #181a1b;
+        border-radius: 14px;
+        padding: 20px;
+        position: relative;
+      }
+      .result-box pre {
+        color: #e8eaed;
+        font-family: "SF Mono", "Fira Code", monospace;
+        font-size: 12.5px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .btn-copy {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        padding: 6px 14px;
+        background: #ff2e98;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn-copy.copied {
+        background: #00b96b;
+      }
+      .result-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .btn-dl {
+        flex: 1;
+        padding: 12px;
+        background: #fff;
+        border: 1.5px solid #e2e4e8;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        color: #181a1b;
+        transition: background 0.1s;
+      }
+      .btn-dl:hover {
+        background: #f4f5f7;
+      }
+
+      /* 모달 (모듈 선택기) */
+      .module-picker-trigger {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px dashed #c0c4cc;
+        border-radius: 10px;
+        background: #fafbfc;
+        cursor: pointer;
+        font-size: 13px;
+        color: #66707a;
+        text-align: left;
+        transition: border-color 0.15s;
+      }
+      .module-picker-trigger:hover {
+        border-color: #ff2e98;
+        color: #ff2e98;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+        align-items: flex-end;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal-sheet {
+        background: #fff;
+        width: 100%;
+        max-height: 80vh;
+        border-radius: 20px 20px 0 0;
+        padding: 0 0 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-header {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 20px 20px 12px;
+        border-bottom: 1px solid #f0f1f3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .modal-header h3 {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        color: #66707a;
+      }
+      .modal-body {
+        padding: 16px 20px;
+      }
+
+      .palette-group-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #99a0aa;
+        letter-spacing: 0.06em;
+        margin: 12px 0 8px;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 480px) {
+        .tpl-grid {
+          grid-template-columns: 1fr;
+        }
+        .card {
+          padding: 20px 16px;
+        }
+        .module-palette {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>플러스탭 작업 지시서 생성기</h1>
+      <p>입력하면 ChatGPT/Codex에 전달할 작업 지시서를 자동으로 만들어 드립니다</p>
+    </header>
+
+    <div class="container">
+      <!-- 1. 파일명 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">1</span>파일 정보
+        </div>
+        <div class="field">
+          <label>출력 파일명</label>
+          <input
+            type="text"
+            id="filename"
+            placeholder="예: DCBGIT-00000"
+          />
+          <div class="hint">
+            콘텐츠 ID만 입력 → DCBGIT-00000.html 파일명으로 안내됩니다
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 템플릿 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">2</span>템플릿 선택
+        </div>
+        <div class="tpl-grid">
+          <label class="tpl-card" id="tpl1">
+            <input type="radio" name="template" value="1" />
+            <div class="tpl-badge">Type 1</div>
+            <div class="tpl-name">투표형</div>
+            <div class="tpl-desc">투표 참여와 결과 확인 중심</div>
+          </label>
+          <label class="tpl-card selected" id="tpl2">
+            <input type="radio" name="template" value="2" checked />
+            <div class="tpl-badge">Type 2</div>
+            <div class="tpl-name">일반형</div>
+            <div class="tpl-desc">KV + 본문 구성의 일반 콘텐츠</div>
+          </label>
+          <label class="tpl-card" id="tpl3">
+            <input type="radio" name="template" value="3" />
+            <div class="tpl-badge">Type 3</div>
+            <div class="tpl-name">밸런스게임형</div>
+            <div class="tpl-desc">두 선택지를 비교하는 밸런스 게임 콘텐츠</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. 섹션 구성 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">3</span>섹션 구성 (모듈 조합)
+        </div>
+        <div class="hint" style="margin-bottom: 14px">
+          섹션 왼쪽의 드래그 핸들을 끌어 순서를 바꿀 수 있습니다. 한 섹션에 여러 모듈을 조합할 수 있습니다.
+        </div>
+        <div class="section-builder" id="section-builder"></div>
+        <button class="btn-add" onclick="addSection()">+ 섹션 추가</button>
+      </div>
+
+      <!-- 4. 이미지 기본 URL -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">4</span>이미지 URL
+        </div>
+        <div class="hint" style="margin-bottom: 14px">
+          이미지 왼쪽의 드래그 핸들을 끌어 URL 순서를 바꿀 수 있습니다.
+          외부 이미지는 입력란에 전체 URL을 붙여 넣으세요.
+        </div>
+        <div class="field">
+          <label>이미지 기본 경로</label>
+          <div class="base-url-row">
+            <span class="base-url-prefix"
+              >https://www.lguplus.com/static/partners/cx/plustab/</span
+            >
+            <input
+              type="text"
+              class="base-url-input"
+              id="base-folder"
+              placeholder="DCBGIT-00000/"
+              oninput="updateImgPrefixes()"
+              onblur="normalizeBaseFolder()"
+            />
+          </div>
+          <div class="hint">
+            폴더명만 입력 (예: DCBGIT-00000/). 이후 이미지마다 파일명만 입력하면
+            됩니다. 마지막 슬래시(/)는 자동으로 추가됩니다. 이미지 입력값이
+            http:// 또는 https://로 시작하면 기본 경로를 붙이지 않습니다.
+          </div>
+        </div>
+        <div id="img-list"></div>
+        <button class="btn-add" onclick="addImgRow()">+ 이미지 추가</button>
+      </div>
+
+      <!-- 5. Figma -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">5</span>Figma 디자인 URL
+        </div>
+        <div class="field">
+          <label>기본 해상도 (674px)</label>
+          <input
+            type="url"
+            id="figma-main"
+            placeholder="https://www.figma.com/design/...node-id=57-4764"
+          />
+        </div>
+        <div class="field">
+          <label
+            >소형 해상도 (360px)
+            <span style="font-weight: 400; color: #99a0aa"
+              >— br 태그 검토용, 없으면 비워두세요</span
+            ></label
+          >
+          <input
+            type="url"
+            id="figma-small"
+            placeholder="https://www.figma.com/design/...node-id=57-4555"
+          />
+        </div>
+      </div>
+
+      <!-- 6. 추가 요청 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="section-num">6</span>추가 요청사항
+          <span style="font-weight: 400; color: #99a0aa">(선택)</span>
+        </div>
+        <textarea
+          id="memo"
+          rows="3"
+          placeholder="특별히 강조할 사항을 자유롭게 입력하세요"
+        ></textarea>
+      </div>
+
+      <button class="btn-generate" onclick="generate()">
+        작업 지시서 생성
+      </button>
+
+      <!-- 결과 -->
+      <div id="result-section" style="margin-top: 24px">
+        <div class="card">
+          <div class="card-title">생성된 작업 지시서</div>
+          <div class="result-box">
+            <button class="btn-copy" onclick="copyResult()">복사</button>
+            <pre id="result-text"></pre>
+          </div>
+          <div class="result-actions">
+            <button class="btn-dl" onclick="downloadMd()">
+              📄 .md 파일 다운로드
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모듈 선택 모달 -->
+    <div class="modal-overlay" id="module-modal" onclick="closeModal(event)">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3 id="modal-title">모듈 선택</h3>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="palette-area"></div>
+
+          <!-- 신규 모듈 -->
+          <div
+            style="
+              margin-top: 20px;
+              padding-top: 16px;
+              border-top: 1px solid #f0f1f3;
+            "
+          >
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+              "
+            >
+              <input
+                type="checkbox"
+                id="new-module-check"
+                onchange="toggleNewModule()"
+                style="width: 16px; height: 16px; accent-color: #ff2e98"
+              />
+              <span style="font-size: 13px; font-weight: 700; color: #181a1b"
+                >신규 유형 — AI가 새로운 모듈 HTML 생성</span
+              >
+            </label>
+            <div class="new-module-box" id="new-module-box">
+              <div class="hint" style="margin-bottom: 10px">
+                기존 모듈에 없는 새로운 레이아웃이 필요할 때 사용하세요. AI가
+                직접 HTML을 생성합니다.
+              </div>
+              <div class="new-module-fields">
+                <input
+                  type="text"
+                  id="new-module-id"
+                  placeholder="모듈 ID (예: module-000)"
+                />
+                <input
+                  type="text"
+                  id="new-module-name"
+                  placeholder="이름 (예: 타임라인 박스)"
+                />
+              </div>
+              <textarea
+                id="new-module-desc"
+                rows="2"
+                placeholder="어떤 레이아웃인지 설명해 주세요 (예: 날짜별 이벤트를 세로 타임라인으로 나열하는 섹션)"
+                style="
+                  margin-top: 8px;
+                  width: 100%;
+                  border: 1.5px solid #e2e4e8;
+                  border-radius: 10px;
+                  padding: 10px 12px;
+                  font-size: 13px;
+                  font-family: inherit;
+                  resize: none;
+                  outline: none;
+                "
+              ></textarea>
+            </div>
+          </div>
+
+          <button
+            class="btn-generate"
+            style="margin-top: 16px"
+            onclick="confirmModal()"
+          >
+            선택 완료
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const BASE_URL = "https://www.lguplus.com/static/partners/cx/plustab/";
+
+      // ── 모듈 정의 ──
+      const MODULES = [
+        // 콘텐츠/기능
+        {
+          id: "001",
+          name: "KV (키비주얼)",
+          desc: "배경이미지 + 제목 오버레이",
+          group: "콘텐츠",
+        },
+        {
+          id: "002",
+          name: "아티클 인트로",
+          desc: "따옴표 아이콘 + 제목 + hr-bottom",
+          group: "콘텐츠",
+        },
+        {
+          id: "003",
+          name: "본문 타이틀 + 목차",
+          desc: "title-box + callout.ty2",
+          group: "콘텐츠",
+        },
+        {
+          id: "004",
+          name: "본문 텍스트 + 단일 이미지",
+          desc: "desc-box + img-figure",
+          group: "콘텐츠",
+        },
+        {
+          id: "005",
+          name: "이미지 스와이퍼",
+          desc: "swiper-box + Swiper.js + 캡션",
+          group: "기능",
+        },
+        {
+          id: "006",
+          name: "버튼 박스",
+          desc: "버튼 스타일 + 앱 브리지 이벤트 호출",
+          group: "콘텐츠",
+        },
+        {
+          id: "007",
+          name: "그레이 박스 (순위/태그)",
+          desc: "gray-box + cont-tag",
+          group: "콘텐츠",
+        },
+        {
+          id: "008",
+          name: "인용문/정보 박스",
+          desc: "quote-box + 정보 라벨/이모지 라벨/quote-notice",
+          group: "콘텐츠",
+        },
+        {
+          id: "009",
+          name: "아코디언",
+          desc: "accordion-box + JS 토글",
+          group: "기능",
+        },
+        {
+          id: "010",
+          name: "회색 배경 섹션",
+          desc: "plustab-article.bg-gray",
+          group: "콘텐츠",
+        },
+        {
+          id: "011",
+          name: "콜아웃 가로형",
+          desc: "callout-box.type-row + callout-row",
+          group: "콘텐츠",
+        },
+        {
+          id: "012",
+          name: "콜아웃 변형 (번호마크)",
+          desc: "callout-box + mark-num",
+          group: "콘텐츠",
+        },
+        {
+          id: "013",
+          name: "콜아웃 확장 카드",
+          desc: "callout-header + card-info",
+          group: "콘텐츠",
+        },
+        {
+          id: "014",
+          name: "콜아웃 아이템 변형",
+          desc: "callout-box + callout-item 구분선형",
+          group: "콘텐츠",
+        },
+        {
+          id: "015",
+          name: "콜아웃 바디 블록",
+          desc: "callout-body 아이콘+텍스트 / callout-header 조합",
+          group: "콘텐츠",
+        },
+        {
+          id: "016",
+          name: "피드백 픽 박스",
+          desc: "pick-box + pick-comment",
+          group: "콘텐츠",
+        },
+        {
+          id: "017",
+          name: "픽박스 스와이퍼",
+          desc: "swiper-box + pick-box",
+          group: "기능",
+        },
+        {
+          id: "018",
+          name: "밸런스 배너",
+          desc: "balance-banner + bounce 애니메이션",
+          group: "콘텐츠",
+        },
+        {
+          id: "019",
+          name: "편지 박스",
+          desc: "letter-box + letter-line-bg",
+          group: "콘텐츠",
+        },
+        {
+          id: "020",
+          name: "비디오 박스",
+          desc: "video-box + 16:9 iframe",
+          group: "콘텐츠",
+        },
+        {
+          id: "021",
+          name: "클릭 재생형 비디오 오버레이",
+          desc: "video-box + video-overlay + video-bg",
+          group: "기능",
+        },
+        {
+          id: "022",
+          name: "제휴 정보 카드",
+          desc: "info-card-box + logo-box",
+          group: "콘텐츠",
+        },
+        {
+          id: "023",
+          name: "채팅 말풍선 박스",
+          desc: "chat-box + chat-list / .chat-right / .no-tail(Q&A형)",
+          group: "콘텐츠",
+        },
+        {
+          id: "024",
+          name: "아이콘 그리드 박스",
+          desc: "grid-box + grid-list",
+          group: "콘텐츠",
+        },
+        {
+          id: "025",
+          name: "카운트다운 타이머",
+          desc: "timer-box + count-down",
+          group: "기능",
+        },
+        {
+          id: "026",
+          name: "참여형 타이틀 영역",
+          desc: "plustab-article.ptc-wrap + title-box + desc",
+          group: "콘텐츠",
+        },
+        {
+          id: "027",
+          name: "모달 팝업",
+          desc: "modal-popup-box + modal-popup-inner + 스크립트",
+          group: "기능",
+        },
+        {
+          id: "028",
+          name: "카페 메뉴 리스트",
+          desc: "membership-cafe-menu + display-menu-list",
+          group: "콘텐츠",
+        },
+        {
+          id: "029",
+          name: "Q&A 박스",
+          desc: "qna-box + question/answer",
+          group: "콘텐츠",
+        },
+        {
+          id: "030",
+          name: "유의사항 박스",
+          desc: "notice-box",
+          group: "콘텐츠"
+        },
+        {
+          id: "031",
+          name: "네비게이션 + 탑 버튼",
+          desc: "scroll-nav-box + top-btn",
+          group: "기능",
+        },
+        {
+          id: "032",
+          name: "바텀시트",
+          desc: "bottom-sheet + 스크립트",
+          group: "기능",
+        },
+      ];
+
+      const MODULE_MAP = Object.fromEntries(MODULES.map((m) => [m.id, m]));
+
+      // ── 템플릿 선택 ──
+      document.querySelectorAll(".tpl-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tpl-card")
+            .forEach((c) => c.classList.remove("selected"));
+          card.classList.add("selected");
+        });
+      });
+
+      // ── 섹션 구성 ──
+      let sections = []; // [{modules: ["001"]}, ...]
+      let draggedSectionIdx = null;
+      let currentSectionIdx = null;
+      let currentSelectedModules = [];
+      let currentNewModule = null;
+
+      function addSection(modules = []) {
+        const idx = sections.length;
+        sections.push({ modules: [...modules], newModule: null });
+        renderSections();
+        return idx;
+      }
+
+      function renderSections() {
+        const builder = document.getElementById("section-builder");
+        builder.innerHTML = "";
+        sections.forEach((sec, idx) => {
+          const row = document.createElement("div");
+          row.className = "section-row";
+
+          const num = document.createElement("span");
+          num.className = "section-row-num";
+          num.textContent = idx + 1;
+
+          const tags = document.createElement("div");
+          tags.className = "section-row-tags";
+
+          sec.modules.forEach((mid) => {
+            const mod = MODULE_MAP[mid] || { id: mid, name: mid };
+            const tag = document.createElement("span");
+            tag.className = "section-tag";
+            tag.innerHTML = `module-${mid}<button onclick="removeModuleFromSection(${idx},'${mid}')">×</button>`;
+            tags.appendChild(tag);
+          });
+          if (sec.newModule) {
+            const tag = document.createElement("span");
+            tag.className = "section-tag";
+            tag.style.background = "#7c3aed";
+            tag.innerHTML = `${
+              sec.newModule.id || "신규"
+            } (신규)<button onclick="removeNewFromSection(${idx})">×</button>`;
+            tags.appendChild(tag);
+          }
+
+          const addBtn = document.createElement("button");
+          addBtn.className = "section-add-btn";
+          addBtn.textContent = "+ 모듈";
+          addBtn.onclick = () => openModal(idx);
+
+          const del = document.createElement("button");
+          del.className = "btn-del-section";
+          del.textContent = "✕";
+          del.onclick = () => {
+            sections.splice(idx, 1);
+            renderSections();
+          };
+
+          const dragHandle = document.createElement("button");
+          dragHandle.type = "button";
+          dragHandle.className = "section-drag-handle";
+          dragHandle.textContent = "⋮⋮";
+          dragHandle.title = "드래그하여 섹션 순서 변경";
+          dragHandle.setAttribute("aria-label", `섹션 ${idx + 1} 순서 변경`);
+          dragHandle.draggable = true;
+          dragHandle.addEventListener("dragstart", (event) => {
+            draggedSectionIdx = idx;
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", String(idx));
+            requestAnimationFrame(() => row.classList.add("is-dragging"));
+          });
+          dragHandle.addEventListener("dragend", () => {
+            draggedSectionIdx = null;
+            document.querySelectorAll(".section-row").forEach((sectionRow) => {
+              sectionRow.classList.remove("is-dragging", "is-drag-over");
+            });
+          });
+          row.addEventListener("dragover", (event) => {
+            if (draggedSectionIdx === null || draggedSectionIdx === idx) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            row.classList.add("is-drag-over");
+          });
+          row.addEventListener("dragleave", () => {
+            row.classList.remove("is-drag-over");
+          });
+          row.addEventListener("drop", (event) => {
+            event.preventDefault();
+            row.classList.remove("is-drag-over");
+            if (draggedSectionIdx === null || draggedSectionIdx === idx) return;
+
+            const [movedSection] = sections.splice(draggedSectionIdx, 1);
+            sections.splice(idx, 0, movedSection);
+            draggedSectionIdx = null;
+            renderSections();
+          });
+
+          tags.appendChild(addBtn);
+          row.appendChild(dragHandle);
+          row.appendChild(num);
+          row.appendChild(tags);
+          row.appendChild(del);
+          builder.appendChild(row);
+        });
+      }
+
+      function removeModuleFromSection(idx, mid) {
+        sections[idx].modules = sections[idx].modules.filter((m) => m !== mid);
+        renderSections();
+      }
+      function removeNewFromSection(idx) {
+        sections[idx].newModule = null;
+        renderSections();
+      }
+
+      // ── 모달 ──
+      function openModal(sectionIdx) {
+        currentSectionIdx = sectionIdx;
+        currentSelectedModules = [...sections[sectionIdx].modules];
+        currentNewModule = sections[sectionIdx].newModule;
+
+        document.getElementById("modal-title").textContent = `섹션 ${
+          sectionIdx + 1
+        } — 모듈 선택`;
+        document.getElementById("new-module-check").checked =
+          !!currentNewModule;
+        document.getElementById("new-module-id").value =
+          currentNewModule?.id || "";
+        document.getElementById("new-module-name").value =
+          currentNewModule?.name || "";
+        document.getElementById("new-module-desc").value =
+          currentNewModule?.desc || "";
+        toggleNewModule();
+        renderPalette();
+        document.getElementById("module-modal").classList.add("open");
+      }
+
+      function closeModal(e) {
+        if (e && e.target !== document.getElementById("module-modal")) return;
+        document.getElementById("module-modal").classList.remove("open");
+      }
+
+      function confirmModal() {
+        if (currentSectionIdx !== null) {
+          sections[currentSectionIdx].modules = [...currentSelectedModules];
+          const hasNew = document.getElementById("new-module-check").checked;
+          sections[currentSectionIdx].newModule = hasNew
+            ? {
+                id: document.getElementById("new-module-id").value.trim(),
+                name: document.getElementById("new-module-name").value.trim(),
+                desc: document.getElementById("new-module-desc").value.trim(),
+              }
+            : null;
+        }
+        document.getElementById("module-modal").classList.remove("open");
+        renderSections();
+      }
+
+      function renderPalette() {
+        const area = document.getElementById("palette-area");
+        area.innerHTML = "";
+        const groups = [...new Set(MODULES.map((m) => m.group))];
+        groups.forEach((group) => {
+          const title = document.createElement("div");
+          title.className = "palette-group-title";
+          title.textContent = group;
+          area.appendChild(title);
+
+          const grid = document.createElement("div");
+          grid.className = "module-palette";
+
+          MODULES.filter((m) => m.group === group).forEach((mod) => {
+            const chip = document.createElement("label");
+            chip.className =
+              "module-chip" +
+              (currentSelectedModules.includes(mod.id) ? " selected" : "");
+            chip.dataset.id = mod.id;
+            chip.innerHTML = `
+          <input type="checkbox" ${
+            currentSelectedModules.includes(mod.id) ? "checked" : ""
+          }>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span class="module-chip-id">${mod.id}</span>
+            </div>
+            <div class="module-chip-name">${mod.name}</div>
+            <div class="module-chip-desc">${mod.desc}</div>
+          </div>`;
+            const cb = chip.querySelector("input[type='checkbox']");
+            cb.addEventListener("change", () => {
+              if (cb.checked) {
+                currentSelectedModules.push(mod.id);
+                chip.classList.add("selected");
+              } else {
+                currentSelectedModules = currentSelectedModules.filter(
+                  (m) => m !== mod.id
+                );
+                chip.classList.remove("selected");
+              }
+            });
+            grid.appendChild(chip);
+          });
+          area.appendChild(grid);
+        });
+      }
+
+      function toggleNewModule() {
+        const box = document.getElementById("new-module-box");
+        if (document.getElementById("new-module-check").checked) {
+          box.classList.add("visible");
+        } else {
+          box.classList.remove("visible");
+        }
+      }
+
+      // ── 이미지 URL ──
+      let imgCount = 0;
+      let draggedImgRow = null;
+      function addImgRow(val = "") {
+        imgCount++;
+        const list = document.getElementById("img-list");
+        const row = document.createElement("div");
+        row.className = "img-row";
+
+        const dragHandle = document.createElement("button");
+        dragHandle.type = "button";
+        dragHandle.className = "img-drag-handle";
+        dragHandle.textContent = "⋮⋮";
+        dragHandle.title = "드래그하여 이미지 URL 순서 변경";
+        dragHandle.setAttribute("aria-label", `이미지 ${imgCount} 순서 변경`);
+        dragHandle.draggable = true;
+
+        dragHandle.addEventListener("dragstart", (event) => {
+          draggedImgRow = row;
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", String(imgCount));
+          requestAnimationFrame(() => row.classList.add("is-dragging"));
+        });
+
+        dragHandle.addEventListener("dragend", () => {
+          draggedImgRow = null;
+          document.querySelectorAll("#img-list .img-row").forEach((imgRow) => {
+            imgRow.classList.remove("is-dragging", "is-drag-over");
+          });
+        });
+
+        row.addEventListener("dragover", (event) => {
+          if (!draggedImgRow || draggedImgRow === row) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          row.classList.add("is-drag-over");
+        });
+
+        row.addEventListener("dragleave", () => {
+          row.classList.remove("is-drag-over");
+        });
+
+        row.addEventListener("drop", (event) => {
+          event.preventDefault();
+          row.classList.remove("is-drag-over");
+          if (!draggedImgRow || draggedImgRow === row) return;
+
+          const targetRect = row.getBoundingClientRect();
+          const insertAfter = event.clientY > targetRect.top + targetRect.height / 2;
+          list.insertBefore(draggedImgRow, insertAfter ? row.nextSibling : row);
+          draggedImgRow = null;
+          renumberImgs();
+        });
+
+        const lbl = document.createElement("span");
+        lbl.className = "img-label";
+        lbl.textContent = `이미지 ${imgCount}`;
+
+        const pathRow = document.createElement("div");
+        pathRow.className = "img-path-row";
+
+        const prefix = document.createElement("span");
+        prefix.className = "img-path-prefix";
+        const folder = getNormalizedBaseFolder();
+        prefix.textContent = folder ? `.../${folder}` : ".../";
+
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.className = "img-path-input";
+        inp.placeholder = "파일명.jpg 또는 https://.../image.jpg";
+        inp.value = val;
+        inp.addEventListener("input", () => updateImgRowPrefix(row));
+
+        const del = document.createElement("button");
+        del.className = "btn-icon danger";
+        del.textContent = "✕";
+        del.onclick = () => {
+          list.removeChild(row);
+          renumberImgs();
+        };
+
+        pathRow.appendChild(prefix);
+        pathRow.appendChild(inp);
+        row.appendChild(dragHandle);
+        row.appendChild(lbl);
+        row.appendChild(pathRow);
+        row.appendChild(del);
+        list.appendChild(row);
+        updateImgRowPrefix(row);
+      }
+
+      function renumberImgs() {
+        imgCount = 0;
+        document.querySelectorAll("#img-list .img-row").forEach((row) => {
+          imgCount++;
+          row.querySelector(".img-label").textContent = `이미지 ${imgCount}`;
+          row
+            .querySelector(".img-drag-handle")
+            .setAttribute("aria-label", `이미지 ${imgCount} 순서 변경`);
+        });
+      }
+
+      function updateImgPrefixes() {
+        document
+          .querySelectorAll("#img-list .img-row")
+          .forEach(updateImgRowPrefix);
+      }
+
+      function getNormalizedBaseFolder() {
+        const value = document.getElementById("base-folder").value.trim();
+        return value ? value.replace(/\/+$/, "") + "/" : "";
+      }
+
+      function normalizeBaseFolder() {
+        const input = document.getElementById("base-folder");
+        input.value = getNormalizedBaseFolder();
+        updateImgPrefixes();
+      }
+
+      function isFullImageUrl(value) {
+        return /^https?:\/\//i.test(value);
+      }
+
+      function updateImgRowPrefix(row) {
+        const folder = getNormalizedBaseFolder();
+        const input = row.querySelector(".img-path-input");
+        const prefix = row.querySelector(".img-path-prefix");
+        const usesFullUrl = isFullImageUrl(input.value.trim());
+
+        prefix.textContent = usesFullUrl
+          ? "전체 URL"
+          : folder
+          ? `.../${folder}`
+          : ".../";
+        prefix.title = usesFullUrl
+          ? "입력한 전체 URL을 그대로 사용합니다."
+          : "이미지 기본 경로가 앞에 붙습니다.";
+      }
+
+      function getImages() {
+        const base = BASE_URL + getNormalizedBaseFolder();
+        return Array.from(
+          document.querySelectorAll("#img-list .img-path-input")
+        )
+          .map((i) => i.value.trim())
+          .filter(Boolean)
+          .map((value) => (isFullImageUrl(value) ? value : base + value));
+      }
+
+      // ── 생성 ──
+      const TPL_FILES = {
+        1: "plustab_template_type1.html",
+        2: "plustab_template_type2.html",
+        3: "plustab_template_type3.html",
+      };
+      const TPL_LABELS = { 1: "투표형", 2: "일반형", 3: "밸런스게임형" };
+      const CURRENT_SOURCE_RULE = `## 최신 기준 파일 확인 (최우선)
+- 공통 CSS의 유일한 기준은 작업 시점의 \`plustab_template_css.html\`이다.
+- 컴포넌트 마크업/클래스는 \`plustab_components.html\`의 현재 내용을 확인한다.
+- 공통 CSS의 클래스명이 변경되면 \`plustab_components.html\`, \`gen-task.html\`, \`gen-task.js\`도 함께 업데이트한다.
+- type 템플릿, 과거 HTML, 이 지시서의 클래스 설명이 기준 파일과 다르면 기준 파일을 따른다.
+- 템플릿 복사 직후 공통 \`<style>\` 영역을 최신 공통 CSS로 전체 교체한다. 기존 CSS와 병합하지 않는다.
+- 신규 컴포넌트 CSS가 필요하면 \`/* === 추가 컴포넌트 CSS === */\` 주석의 바로 다음 줄부터 삽입한다. \`</style>\` 직전에 덧붙이지 않는다. 기존 추가 CSS가 있으면 새 CSS를 주석 바로 다음에 넣고 기존 추가 CSS는 뒤에 유지한다.
+- 신규 모듈의 대표 래퍼 클래스는 반드시 \`○○○○-box\` 형식으로 작성한다. 내부 요소 클래스에는 이 접미사를 강제하지 않으며, 기존 클래스와 충돌하지 않는지 먼저 검색한다.
+- 구현 전 사용할 클래스가 두 기준 파일에 실제로 존재하는지 검색한다.`;
+
+      function generate() {
+        const filename = document.getElementById("filename").value.trim();
+        if (!filename) {
+          alert("파일명을 입력해주세요.");
+          return;
+        }
+        if (!/^DCBGIT-\d{5}$/.test(filename)) {
+          alert("파일명은 DCBGIT-00000 형식으로 입력해주세요.");
+          return;
+        }
+        if (sections.length === 0) {
+          alert("섹션을 하나 이상 추가해주세요.");
+          return;
+        }
+
+        const tplKey =
+          document.querySelector("input[name='template']:checked")?.value ||
+          "2";
+        const outputHtml = `${filename}.html`;
+        const tplFile = TPL_FILES[tplKey];
+        const tplLabel = TPL_LABELS[tplKey];
+        const images = getImages();
+        const figmaMain = document.getElementById("figma-main").value.trim();
+        const figmaSmall = document.getElementById("figma-small").value.trim();
+        const memo = document.getElementById("memo").value.trim();
+
+        const moduleList = sections
+          .map((sec, i) => {
+            const parts = sec.modules.map((m) => `module-${m}`);
+            if (sec.newModule)
+              parts.push(`${sec.newModule.id || "신규모듈"} (신규생성)`);
+            return parts.join("+");
+          })
+          .join(", ");
+
+        const moduleDetail = sections
+          .map((sec, i) => {
+            const parts = sec.modules.map((m) => {
+              const info = MODULE_MAP[m];
+              return info ? `module-${m} (${info.name})` : `module-${m}`;
+            });
+            if (sec.newModule) {
+              const nm = sec.newModule;
+              parts.push(
+                `${nm.id || "신규모듈"} — **[AI 신규 생성]** ${nm.name || ""}${
+                  nm.desc ? ": " + nm.desc : ""
+                }`
+              );
+            }
+            return `   ${i + 1}. ${parts.join(" + ")}`;
+          })
+          .join("\n");
+
+        const newModuleSections = sections.filter((s) => s.newModule);
+        const newModuleNote =
+          newModuleSections.length > 0
+            ? `
+## 신규 모듈 생성 요청
+아래 모듈은 기존 컴포넌트에 없는 새로운 레이아웃입니다. \`PLUSTAB_GUIDE.md\` 규칙을 준수하여 HTML과 CSS를 신규 작성해 주세요. 대표 래퍼 클래스는 반드시 \`○○○○-box\` 형식으로 작성하세요. 신규 CSS는 반드시 \`/* === 추가 컴포넌트 CSS === */\` 주석의 바로 다음 줄부터 삽입하고, \`</style>\` 직전에 덧붙이지 마세요.
+${newModuleSections
+  .map((s) => {
+    const nm = s.newModule;
+    return `- **${nm.id || "신규"}** — ${nm.name || "(이름 없음)"}${
+      nm.desc ? "\n  설명: " + nm.desc : ""
+    }`;
+  })
+  .join("\n")}
+`
+            : "";
+
+        const imgSection = images
+          .map((url, i) => `- 이미지 ${i + 1}: \`${url}\``)
+          .join("\n");
+
+        const brSection = figmaSmall
+          ? `
+
+## br 태그 검토
+- 소형 해상도(360px): ${figmaSmall}
+- 기본 해상도(674px): ${figmaMain}
+- 두 해상도를 비교해 줄바꿈이 달라지는 위치에 \`<br class="use-50">\` 삽입`
+          : "";
+
+        const needsSwiper = sections.some((s) =>
+          s.modules.some((m) => ["005", "017", "031"].includes(m))
+        );
+        const swiperNote = needsSwiper
+          ? "\n> ⚠️ Swiper.js 사용 모듈 포함 → CDN 스크립트 확인\n"
+          : "";
+
+        const result = `# 플러스탭 작업 지시서 — ${outputHtml}
+
+## 기본 정보
+| 항목 | 내용 |
+|------|------|
+| 출력 파일 | \`${outputHtml}\` |
+| 기준 템플릿 | \`${tplFile}\` (${tplLabel}) |${
+          figmaMain ? `\n| Figma (기본) | ${figmaMain} |` : ""
+        }${figmaSmall ? `\n| Figma (소형) | ${figmaSmall} |` : ""}
+
+${CURRENT_SOURCE_RULE}
+
+## 섹션 구성
+${moduleDetail}
+${swiperNote}${newModuleNote}
+## 영역별 이미지 URL
+${imgSection || "(이미지 없음)"}${brSection}
+
+## 작업 절차 (workflow.md 기준)
+
+1. \`${tplFile}\` 을 구조 참고용으로 \`${outputHtml}\` 로 복사
+2. 현재 \`plustab_template_css.html\` 내용을 확인하고 복사된 공통 CSS 영역을 전체 교체
+3. Figma 디자인 확인${figmaMain ? `: ${figmaMain}` : ""}${
+          figmaSmall ? "\n   소형 해상도: " + figmaSmall : ""
+        }
+4. 섹션 조합: ${moduleList}
+5. 이미지 URL 삽입 (위 목록 순서대로)
+6. 사용 클래스가 최신 공통 CSS 또는 컴포넌트 파일에 존재하는지 확인
+7. 신규 CSS가 있으면 \`/* === 추가 컴포넌트 CSS === */\` 바로 다음에 삽입됐는지와 \`</style>\` 직전에 덧붙은 CSS가 없는지 확인
+8. var(--) 없는지, 인라인 style="" 없는지, 클래스명 변경 없는지 확인
+9. 최신 공통 CSS 일치 여부 및 Figma 원본 디자인을 최종 비교${
+          memo ? `\n\n## 추가 요청사항\n${memo}` : ""
+        }
+
+---
+*PLUSTAB_GUIDE.md + workflow.md 기준*`;
+
+        document.getElementById("result-text").textContent = result;
+        document.getElementById("result-section").style.display = "block";
+        document
+          .getElementById("result-section")
+          .scrollIntoView({ behavior: "smooth" });
+        window._resultText = result;
+        window._resultFilename = filename;
+      }
+
+      function copyResult() {
+        navigator.clipboard.writeText(window._resultText || "").then(() => {
+          const btn = document.querySelector(".btn-copy");
+          btn.textContent = "✓ 복사됨";
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.textContent = "복사";
+            btn.classList.remove("copied");
+          }, 2000);
+        });
+      }
+
+      function downloadMd() {
+        const blob = new Blob([window._resultText || ""], {
+          type: "text/markdown;charset=utf-8",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${window._resultFilename || "task"}_task.md`;
+        a.click();
+      }
+
+      // 초기 섹션
+      addSection(["001"]);
+      addSection(["002"]);
+      addSection();
+      addImgRow();
+      addImgRow();
+    </script>
+  </body>
+</html>
